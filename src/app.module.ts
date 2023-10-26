@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { SharedModule } from './modules/shared/shared.module';
+import { UserModule } from './modules/users/user.module';
 
 @Module({
   imports: [
@@ -12,6 +14,8 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
       ttl: 60,
       limit: 120,
     }),
+    SharedModule,
+    UserModule.register({ renderControllers: true }),
   ],
   providers: [
     {

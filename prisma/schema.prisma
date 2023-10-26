@@ -9,3 +9,162 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id                    Int           @id @default(autoincrement())
+  firstName             String
+  lastName              String
+  email                 String        @unique
+  password              String
+  phoneNumber           String?       
+  countryCode           String?       
+  country               String?
+  profileImage          String?
+  profileImageProviders String?
+  transactions          Transaction[]
+  walletBalance         Float?        @default(0)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+}
+
+model SellerProfile {
+  id                    Int           @id @default(autoincrement())
+  items                 Item[]
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+}
+
+model BuyerProfile {
+  id                    Int           @id @default(autoincrement())
+  checkouts             Checkout[]
+  reviews               BuyerReview[]
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+}     
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model Transaction {
+  id              Int                 @id @default(autoincrement())
+  user            User?               @relation(references: [id],fields: [userId])
+  userId          Int
+  buyerId         Int?
+  checkout        Checkout?
+  amount          Float
+  status          TransactionStatus   @default(PENDING)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+}
+
+model Checkout {
+  id              Int             @id @default(autoincrement())
+  transaction     Transaction     @relation(references: [id], fields: [transactionId])
+  transactionId   Int             @unique
+  isCart          Boolean         @default(true)
+  items           CheckoutItem[]  
+  buyer           BuyerProfile    @relation(references: [id], fields: [buyerId])
+  buyerId         Int
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+enum CHECKOUT_ITEM_STATUS {
+  PENDING
+  INTRANSIT
+  PICKUP_STATION
+  BUYER_REJECTED
+  DELIVERED
+  RETURNED
+}
+model CheckoutItem {
+  id              Int                     @id @default(autoincrement())
+  checkout        Checkout                @relation(references: [id],fields: [checkoutId])
+  checkoutId      Int
+  item            Item                    @relation(references: [id], fields: [itemId])
+  itemId          Int                     @unique
+  units           Int                     @default(1)
+  soldAt          Float             
+  status          CHECKOUT_ITEM_STATUS    @default(PENDING)
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+}
+
+enum ITEM_STATUS {
+  SUBMITTED
+  ADMIN_REJECTED
+  ACCEPTED
+}
+
+model Item {
+  id              Int               @id @default(autoincrement())
+  price           Float             
+  releasedUnits   Int
+  unitsLeft       Int
+  color           ItemColor         @relation(references: [id], fields: [colorId])
+  colorId         Int     
+  brand           ItemBrand         @relation(references: [id],fields: [brandId])
+  brandId         Int
+  seller          SellerProfile     @relation(references: [id], fields: [sellerId])
+  sellerId        Int
+  status          ITEM_STATUS       @default(SUBMITTED)
+  checkoutItem    CheckoutItem?  
+  reviews         BuyerReview[]
+  media           ItemMedia[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model ItemMedia {
+  id              Int             @id @default(autoincrement())
+  url             String?
+  providerId      String?
+  item            Item            @relation(references: [id], fields: [itemId])
+  itemId          Int
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model BuyerReview {
+  id              Int            @id @default(autoincrement())
+  item            Item           @relation(references: [id],fields: [itemId])
+  itemId          Int   
+  buyer           BuyerProfile   @relation(references: [id], fields: [buyerId])
+  buyerId         Int
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model ItemCategory {
+  id              Int             @id @default(autoincrement())
+  name            String
+  imageUrl        String?
+  imageProvider   String?
+  brands          ItemBrand[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model ItemBrand {
+  id              Int             @id @default(autoincrement())
+  name            String
+  category        ItemCategory    @relation(references: [id], fields: [categoryId])
+  categoryId      Int
+  items           Item[]
+  imageUrl        String?
+  imageProvider   String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model ItemColor {
+  id              Int             @id @default(autoincrement())
+  name            String          @unique
+  hexcode         String          @unique
+  items           Item[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
