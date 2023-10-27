@@ -92,23 +92,25 @@ export class AuthService {
 
     delete user.password;
 
-    return isSeller
-      ? SellerLoginResult.from(
-          {
-            ...user,
-            tokens: this.sign({ id: user.id, role: USER_ROLE.SELLER }),
-          },
-          'Login Successful',
-          201,
-        )
-      : BuyerLoginResult.from(
-          {
-            ...user,
-            tokens: this.sign({ id: user.id, role: USER_ROLE.BUYER }),
-          },
-          'Login Successful',
-          201,
-        );
+    if (isSeller) {
+      return SellerLoginResult.from(
+        {
+          ...user,
+          tokens: this.sign({ id: user.id, role: USER_ROLE.SELLER }),
+        },
+        'Login Successful',
+        201,
+      );
+    } else {
+      BuyerLoginResult.from(
+        {
+          ...user,
+          tokens: this.sign({ id: user.id, role: USER_ROLE.BUYER }),
+        },
+        'Login Successful',
+        201,
+      );
+    }
   }
 
   sign(payload: { id: number; role: USER_ROLE }): JWT_Tokens {
