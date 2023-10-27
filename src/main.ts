@@ -21,10 +21,8 @@ async function bootstrap() {
   app.setGlobalPrefix('/api/v1');
 
   const config = new DocumentBuilder()
-    .setTitle('Campus Buy Server')
-    .setDescription(
-      'This is the backend service of Campus Buy Server, Written in ExpressJs/NestJs',
-    )
+    .setTitle('OOSRI SERVER')
+    .setDescription('This is the backend service for OOSRI')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
