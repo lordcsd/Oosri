@@ -92,7 +92,7 @@ model CheckoutItem {
   checkout        Checkout                @relation(references: [id],fields: [checkoutId])
   checkoutId      Int
   item            Item                    @relation(references: [id], fields: [itemId])
-  itemId          Int                     @unique
+  itemId          Int                     
   units           Int                     @default(1)
   soldAt          Float             
   status          CHECKOUT_ITEM_STATUS    @default(PENDING)
@@ -118,7 +118,7 @@ model Item {
   seller          SellerProfile     @relation(references: [id], fields: [sellerId])
   sellerId        Int
   status          ITEM_STATUS       @default(SUBMITTED)
-  checkoutItem    CheckoutItem?  
+  checkoutItem    CheckoutItem[]  
   reviews         BuyerReview[]
   media           ItemMedia[]
   createdAt       DateTime          @default(now())
