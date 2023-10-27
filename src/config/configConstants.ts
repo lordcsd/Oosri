@@ -1,5 +1,6 @@
 export const configConstants = {
   PORT: 'PORT',
+  encryptor: { key: 'ENCRYPTOR_SECRET_KEY' },
   PRISMA_CLIENT: 'prismaClient',
   jwt: {
     secret: 'JWT_SECRET',

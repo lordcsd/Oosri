@@ -10,7 +10,7 @@ export class UserModule {
     renderControllers = false,
   }: DynamicModulesOptions): DynamicModule {
     return {
-      controllers: [],
+      ...(renderControllers && { controllers: [] }),
       module: UserModule,
     };
   }

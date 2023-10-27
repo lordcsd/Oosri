@@ -3913,10 +3913,10 @@ neo-async@^2.6.2:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.2.tgz#b4aafb93e3aeb2d8174ca53cf163ab7d7308305f"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
 
-nestjs-custom-class-validators@^1.0.26:
-  version "1.0.26"
-  resolved "https://registry.yarnpkg.com/nestjs-custom-class-validators/-/nestjs-custom-class-validators-1.0.26.tgz#3f5c214d7ff0d4d34b1938af5fefb27d7b1a21d1"
-  integrity sha512-MREIaAPpehvW8KG7bGV+UC3KnWXWp5pbqsbI3i8RFCZFBYIvqMPkSdPhBNzFSEKUe72Hz0dTjaEqX1tdQt9qYQ==
+nestjs-custom-class-validators@^1.0.32:
+  version "1.0.32"
+  resolved "https://registry.yarnpkg.com/nestjs-custom-class-validators/-/nestjs-custom-class-validators-1.0.32.tgz#6c6f27b61ba109c9ddacd25cd4c801d1afae7d10"
+  integrity sha512-Zh9ZQ6K6Hht2UmWC3zeNtGCCDPQbDrRg078rEaHyxuqhTU5LJmPU4MLcrCHvg970eVHlPoAQ0TwNUjUTFqi4Kw==
   dependencies:
     "@nestjs/common" "^9.2.1"
     "@nestjs/swagger" "^6.1.4"

@@ -38,7 +38,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "cloudinary": "^1.37.3",
-    "nestjs-custom-class-validators": "^1.0.26",
+    "nestjs-custom-class-validators": "^1.0.32",
     "nestjs-form-data": "^1.9.0",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",

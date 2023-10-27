@@ -4,6 +4,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { SharedModule } from './modules/shared/shared.module';
 import { UserModule } from './modules/users/user.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { JWTAuthGuard } from './modules/auth/guards/JWTAuth';
 
 @Module({
   imports: [
@@ -16,11 +18,16 @@ import { UserModule } from './modules/users/user.module';
     }),
     SharedModule,
     UserModule.register({ renderControllers: true }),
+    AuthModule.register({ renderControllers: true }),
   ],
   providers: [
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: JWTAuthGuard,
     },
   ],
 })
