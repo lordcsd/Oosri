@@ -25,7 +25,7 @@ export class ItemService {
     );
   }
 
-  async getItems(queries: GetItemsDTO, userId: string) {
+  async getItems(queries: GetItemsDTO, userId?: string) {
     const {
       search,
       categoryId,
