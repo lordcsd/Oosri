@@ -6,6 +6,7 @@ import { SharedModule } from './modules/shared/shared.module';
 import { UserModule } from './modules/users/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { JWTAuthGuard } from './modules/auth/guards/JWTAuth';
+import { ItemModule } from './modules/items/item.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { JWTAuthGuard } from './modules/auth/guards/JWTAuth';
     SharedModule,
     UserModule.register({ renderControllers: true }),
     AuthModule.register({ renderControllers: true }),
+    ItemModule.register({ renderControllers: true }),
   ],
   providers: [
     {

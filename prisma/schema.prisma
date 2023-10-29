@@ -43,6 +43,7 @@ model SellerProfile {
 model BuyerProfile {
   id                    Int           @id @default(autoincrement())
   user                  User?
+  liked                 Item[]
   checkouts             Checkout[]
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
@@ -101,29 +102,39 @@ model CheckoutItem {
   updatedAt       DateTime                @updatedAt
 }
 
-enum ITEM_STATUS {
+enum ITEM_SUBMISSION_STATUS {
   SUBMITTED
   ADMIN_REJECTED
   ACCEPTED
 }
 
+enum ITEM_CONDITION {
+  BRAND_NEW
+  REFURBISHED
+  USED
+}
+
 model Item {
-  id              Int               @id @default(autoincrement())
-  price           Float             
-  releasedUnits   Int
-  unitsLeft       Int
-  color           ItemColor         @relation(references: [id], fields: [colorId])
-  colorId         Int     
-  brand           ItemBrand         @relation(references: [id],fields: [brandId])
-  brandId         Int
-  seller          SellerProfile     @relation(references: [id], fields: [sellerId])
-  sellerId        Int
-  status          ITEM_STATUS       @default(SUBMITTED)
-  checkoutItem    CheckoutItem[]  
-  reviews         BuyerReview[]
-  media           ItemMedia[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id             Int                          @id @default(autoincrement())
+  name           String
+  description    String?
+  price          Float                        
+  releasedUnits  Int          
+  unitsLeft      Int          
+  color          ItemColor                    @relation(references: [id], fields: [colorId])
+  colorId        Int                
+  brand          ItemBrand                    @relation(references: [id],fields: [brandId])
+  brandId        Int          
+  seller         SellerProfile                @relation(references: [id], fields: [sellerId])
+  sellerId       Int
+  status         ITEM_SUBMISSION_STATUS       @default(SUBMITTED)
+  condition      ITEM_CONDITION
+  checkoutItem   CheckoutItem[]  
+  reviews        BuyerReview[]
+  media          ItemMedia[]
+  likes          BuyerProfile[]
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
 }
 
 model ItemMedia {
@@ -140,6 +151,8 @@ model BuyerReview {
   id              Int            @id @default(autoincrement())
   item            Item           @relation(references: [id],fields: [itemId])
   itemId          Int   
+  stars           Int            @default(0)
+  comment         String
   checkoutItem    CheckoutItem?    
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
