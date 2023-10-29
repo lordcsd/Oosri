@@ -8,10 +8,7 @@ import { JWTDecodedDTO } from '../../../common/dtos/JWTDecoded.dto';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly prisma: PrismaService,
-  ) {
+  constructor(private readonly configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -19,7 +16,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate({ id, identifier }: JWTDecodedDTO) {
-    // return user
+  async validate(payload: JWTDecodedDTO) {
+    return payload;
   }
 }

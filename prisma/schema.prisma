@@ -71,8 +71,6 @@ model Checkout {
   transaction     Transaction     @relation(references: [id], fields: [transactionId])
   transactionId   Int             @unique
   isCart          Boolean         @default(true)
-  review          BuyerReview     @relation(references: [id], fields: [reviewId])
-  reviewId        Int             @unique
   items           CheckoutItem[]  
   buyer           BuyerProfile    @relation(references: [id], fields: [buyerId])
   buyerId         Int
@@ -95,6 +93,8 @@ model CheckoutItem {
   item            Item                    @relation(references: [id], fields: [itemId])
   itemId          Int                     
   units           Int                     @default(1)
+  review          BuyerReview     @relation(references: [id], fields: [reviewId])
+  reviewId        Int             @unique
   soldAt          Float             
   status          CHECKOUT_ITEM_STATUS    @default(PENDING)
   createdAt       DateTime                @default(now())
@@ -140,7 +140,7 @@ model BuyerReview {
   id              Int            @id @default(autoincrement())
   item            Item           @relation(references: [id],fields: [itemId])
   itemId          Int   
-  checkout        Checkout?    
+  checkoutItem    CheckoutItem?    
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 }

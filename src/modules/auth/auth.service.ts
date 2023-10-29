@@ -1,10 +1,10 @@
 import {
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
-import { USER_ROLE } from '../../common/enum/user-roles.enum';
 import { ConfigService } from '@nestjs/config';
 import { configConstants } from '../../config/configConstants';
 import { JWT_Tokens, LoginDTO, RegisterDTO } from './dto/register.dto';
@@ -13,6 +13,8 @@ import { compareSync, hash } from 'bcrypt';
 import { RegisterResult } from './results/register.result';
 import { BuyerLoginResult, SellerLoginResult } from './results/login.result';
 import { Encryptor } from '../../utils/encryptor';
+import { UserProfileResult } from './results/user-profile.dto';
+import { USER_TYPE } from '../../common/enum/user-types.enum';
 
 @Injectable()
 export class AuthService {
@@ -96,7 +98,7 @@ export class AuthService {
       return SellerLoginResult.from(
         {
           ...user,
-          tokens: this.sign({ id: user.id, role: USER_ROLE.SELLER }),
+          tokens: this.sign({ id: user.id, role: USER_TYPE.SELLER }),
         },
         'Login Successful',
         201,
@@ -105,7 +107,7 @@ export class AuthService {
       BuyerLoginResult.from(
         {
           ...user,
-          tokens: this.sign({ id: user.id, role: USER_ROLE.BUYER }),
+          tokens: this.sign({ id: user.id, role: USER_TYPE.BUYER }),
         },
         'Login Successful',
         201,
@@ -113,7 +115,33 @@ export class AuthService {
     }
   }
 
-  sign(payload: { id: number; role: USER_ROLE }): JWT_Tokens {
+  async getProfile(id: number) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phoneNumber: true,
+        country: true,
+        countryCode: true,
+        profileImage: true,
+        walletBalance: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User Not Found');
+    }
+
+    return UserProfileResult.from(user, 201, 'User Profile Fetched');
+  }
+
+  sign(payload: { id: number; role: USER_TYPE }): JWT_Tokens {
     const accessToken = this.encryptor.encrypt(
       jwt.sign(payload, this.configService.get(configConstants.jwt.secret), {
         expiresIn: '1h',

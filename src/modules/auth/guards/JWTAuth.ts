@@ -1,49 +1,77 @@
-import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { Observable } from 'rxjs';
+import { USER_TYPE } from '../../../common/enum/user-types.enum';
+import { CHECK_USER_TYPE } from '../../../common/decorators/check-user-group.decorator';
+import { Encryptor } from '../../../utils/encryptor';
+import { decode, JwtPayload, sign } from 'jsonwebtoken';
+import { ConfigService } from '@nestjs/config';
+import { configConstants } from '../../../config/configConstants';
+import { PrismaService } from '../../shared/prisma.service';
 
 @Injectable()
 export class JWTAuthGuard extends AuthGuard('jwt') {
-  constructor(private reflector: Reflector) {
+  constructor(
+    private reflector: Reflector,
+    private readonly encryptor: Encryptor,
+    private readonly configService: ConfigService,
+    private readonly prismaService: PrismaService,
+  ) {
     super();
   }
 
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride('isPublic', [
       context.getHandler(),
       context.getClass(),
     ]);
     if (isPublic) return true;
 
-    return super.canActivate(context);
-  }
+    const req = context.switchToHttp().getRequest();
+    const token = req.headers?.authorization.replace('Bearer ', '');
+    const plainToken = this.encryptor.decrypt(token);
+    const decoded = decode(plainToken, {}) as JwtPayload;
 
-  handleRequest<TUser = any>(
-    err: any,
-    user: any,
-    info: any,
-    context: ExecutionContext,
-    status?: any,
-  ): TUser {
-    if (!user) {
-      throw new UnauthorizedException();
-    }
+    const userTypes: USER_TYPE[] = this.reflector.getAllAndOverride(
+      CHECK_USER_TYPE,
+      [context.getHandler(), context.getClass()],
+    );
 
-    // const adminFields = ['id', 'email', 'name', 'password', 'createdAt'];
-    // const isAdmin =
-    //   adminFields.sort().join() === Object.keys(user).sort().join();
+    const secondsBeforeExpire = +new Date(decoded.exp * 1000) - +new Date();
 
-    // if (isAdmin && this.roles.includes(roles.ADMIN)) {
-    //   return user;
-    // }
+    const validateUserType = async () => {
+      if (userTypes) {
+        const user = await this.prismaService.user.findFirst({
+          where: { id: decoded.id },
+        });
 
-    // if (!isAdmin && this.roles.includes(roles.USER)) {
-    //   return user;
-    // }
+        const userValid =
+          (userTypes.includes(USER_TYPE.BUYER) && user.buyerProfileId) ||
+          (userTypes.includes(USER_TYPE.SELLER) && user.sellerProfileId);
 
-    throw new UnauthorizedException();
+        if (!userValid) {
+          throw new ForbiddenException('Not Allowed');
+        }
+
+        const role = user.buyerProfileId ? USER_TYPE.BUYER : USER_TYPE.SELLER;
+        const payload = { id: decoded.id, role, userTypes };
+        const resigned = sign(
+          payload,
+          this.configService.get<string>(configConstants.jwt.secret),
+          { expiresIn: secondsBeforeExpire },
+        );
+
+        req.headers.authorization = `Bearer ${resigned}`;
+      }
+      return super.canActivate(context);
+    };
+
+    return validateUserType() as Promise<boolean>;
   }
 }

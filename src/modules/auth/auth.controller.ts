@@ -1,17 +1,33 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 import { LoginDTO, RegisterDTO } from './dto/register.dto';
 import { AuthService } from './auth.service';
 import { UserRegisterResultDTO } from './results/register.result';
 import { BuyerLoginResult, SellerLoginResult } from './results/login.result';
+import { UserProfileResult } from './results/user-profile.dto';
+import { CheckUserType } from '../../common/decorators/check-user-group.decorator';
+import { USER_TYPE } from '../../common/enum/user-types.enum';
 
-@Controller('auth/buyer')
-@ApiTags('Buyer Auth')
-export class AuthBuyerController {
+import { GetCurrentUserId } from '../../common/decorators/get-current-user-id.decorator';
+
+@Controller('auth')
+@ApiTags('Auth')
+export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('register')
+  @Get('/me')
+  @ApiBearerAuth()
+  @CheckUserType(USER_TYPE.BUYER, USER_TYPE.SELLER)
+  @ApiResponse({
+    status: 201,
+    type: UserProfileResult,
+  })
+  async getUserProfile(@GetCurrentUserId() userId: number) {
+    return await this.authService.getProfile(userId);
+  }
+
+  @Post('buyer/register')
   @Public()
   @ApiResponse({
     type: UserRegisterResultDTO,
@@ -21,20 +37,14 @@ export class AuthBuyerController {
     return await this.authService.register(payload, false);
   }
 
-  @Post('login')
+  @Post('buyer/login')
   @Public()
   @ApiResponse({ type: BuyerLoginResult, status: 200 })
   async loginBuyer(@Body() payload: LoginDTO) {
     return await this.authService.login(payload);
   }
-}
 
-@Controller('auth/seller')
-@ApiTags('Seller Auth')
-export class AuthSellerController {
-  constructor(private readonly authService: AuthService) {}
-
-  @Post('register')
+  @Post('seller/register')
   @Public()
   @ApiResponse({
     type: UserRegisterResultDTO,
@@ -44,7 +54,7 @@ export class AuthSellerController {
     return await this.authService.register(payload, true);
   }
 
-  @Post('login')
+  @Post('seller/login')
   @Public()
   @ApiResponse({ type: SellerLoginResult, status: 200 })
   async loginSeller(@Body() payload: LoginDTO) {

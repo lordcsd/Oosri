@@ -2,7 +2,7 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { DynamicModulesOptions } from '../../common/dtos/dynamic-module-options';
 import { AuthService } from './auth.service';
-import { AuthBuyerController, AuthSellerController } from './auth.controller';
+import { AuthController } from './auth.controller';
 
 @Module({ imports: [], providers: [JwtStrategy, AuthService] })
 export class AuthModule {
@@ -11,7 +11,7 @@ export class AuthModule {
   }: DynamicModulesOptions): DynamicModule {
     return {
       ...(renderControllers && {
-        controllers: [AuthSellerController, AuthBuyerController],
+        controllers: [AuthController],
       }),
       module: AuthModule,
     };
