@@ -4,24 +4,33 @@ import {
   CustomNumberValidator,
   CustomStringValidator,
 } from 'nestjs-custom-class-validators';
-import { Min } from 'class-validator';
+import { Matches, Min } from 'class-validator';
+import { PaginationParamsDTO } from '../../../common/dtos/paginationParams.dto';
 
-export class GetItemsDTO {
+export enum ItemSortBy {
+  RATING = '"sellerRating"',
+  PRICE = '"price"',
+  UNITS_SOLD = '"unitsSold"',
+  CREATED_AT = '"createdAt"',
+}
+
+export class GetItemsDTO extends PaginationParamsDTO {
   @CustomStringValidator({ optional: true })
+  @Matches(/^[a-zA-Z0-9\s\\,.]+$/u, { message: 'Invalid Search String' })
   search?: string;
 
-  @CustomStringValidator({ isUUID: true, optional: true })
-  categoryId?: string;
+  @CustomNumberValidator({ optional: true })
+  categoryId?: number;
 
-  @CustomStringValidator({ isUUID: true, optional: true })
-  brandId?: string;
+  @CustomNumberValidator({ optional: true })
+  brandId?: number;
 
   @CustomNumberValidator({ optional: true })
   @Min(0)
   minPrice?: number = 0;
 
   @CustomNumberValidator({ optional: true })
-  maxPrice?: number = Infinity;
+  maxPrice?: number;
 
   @CustomStringValidator({ optional: true })
   country?: string;
@@ -29,6 +38,9 @@ export class GetItemsDTO {
   @CustomEnumValidator({ validEnum: ITEM_CONDITION, optional: true })
   condition?: ITEM_CONDITION;
 
+  @CustomEnumValidator({ validEnum: ItemSortBy, optional: true })
+  sortBy?: ItemSortBy = ItemSortBy.CREATED_AT;
+
   @CustomEnumValidator({ validEnum: ['desc', 'asc'], optional: true })
-  sortDirection: 'desc' | 'asc' = 'desc';
+  sortDirection?: 'desc' | 'asc' = 'desc';
 }

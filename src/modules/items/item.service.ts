@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
 import { CategoryAndBrandsResult } from './results/category-and-brand.result';
 import { GetItemsDTO } from './dto/get-items.dto';
-import { ItemResultDTO } from './results/get-items.result';
+import { ItemResultDTO, ManyItemsResult } from './results/get-items.result';
+import { ITEM_SUBMISSION_STATUS, Prisma } from '@prisma/client';
 
 @Injectable()
 export class ItemService {
@@ -25,7 +26,7 @@ export class ItemService {
     );
   }
 
-  async getItems(queries: GetItemsDTO, userId?: string) {
+  async getItems(queries: GetItemsDTO, userId: number | null = null) {
     const {
       search,
       categoryId,
@@ -34,22 +35,84 @@ export class ItemService {
       maxPrice,
       country,
       condition,
+      sortBy,
+      sortDirection,
+      page,
+      limit,
     } = queries;
 
-    const [queryResult]: ItemResultDTO[] = await this.prismaService.$queryRaw`
+    const whereQueries: string[] = [
+      `i."status" != '${ITEM_SUBMISSION_STATUS.ADMIN_REJECTED}'`,
+      `i."price" >= ${minPrice} `,
+    ];
+
+    categoryId && whereQueries.push(`brand."categoryId" = ${categoryId}`);
+    brandId && whereQueries.push(`i."brandId" = ${brandId}`);
+    maxPrice && whereQueries.push(`i."price" <= ${maxPrice}`);
+    country && whereQueries.push(`seller."country" ILIKE '${country}'`);
+    condition && whereQueries.push(`i."condition" = '${condition}'`);
+    search &&
+      whereQueries.push(
+        `(${search
+          .split(' ')
+          .map((f) => f.trim())
+          .filter(Boolean)
+          .map((strn) => `i."name" ILIKE '%${strn}%'`)
+          .join(' OR ')})`,
+      );
+
+    const sql = `
       SELECT 
-        im."url" as "media",
+        i.id as "id",
         i."name" as "name",
         i."condition" as "condition",
         i."price" as "price",
+        i."brandId" as "brandId",
+        brand."categoryId" as "categoryId",
         seller."id" as "sellerId",
         seller."name" as "sellerName",
         seller."country" as "sellerCountry",
-        seller."averageRating" as "sellerRating"
-      FROM
-        "Item" i
-      LEFT JOIN "ItemMedia" im ON i."id" = im."itemId"
+        seller."averageRating" as "sellerRating",
+        (${!!userId} = true AND fav."userId" = ${userId} AND fav."liked" = true) as "liked",
+        i."releasedUnits" - i."unitsLeft" as "unitsSold",
+        i."createdAt" as "createdAt",
+        media."urls" AS  "media"
+      FROM "Item" i
+
+      LEFT JOIN 
+        (
+          SELECT 
+            u."id" as "userId",
+            bpti."A" = u."buyerProfileId" AND bpti."B" = i."id" as "liked"
+          FROM
+          "_BuyerProfileToItem" bpti
+          LEFT JOIN "User" u ON bpti."A" = u."buyerProfileId"
+          LEFT JOIN "Item" i ON bpti."B" = i."id"
+        ) as fav
+      ON fav."liked" = true
+
+      LEFT JOIN 
+        (
+          SELECT
+            ib."categoryId" as "categoryId",
+            ib."id" as "id"
+          FROM
+          "ItemBrand" ib
+        ) as brand
+      ON brand."id" = i."brandId"
+
+      LEFT JOIN
+        (
+          SELECT 
+            ARRAY_AGG(im."url") as "urls",
+            im."itemId" as "itemId"
+          FROM "ItemMedia" im 
+          GROUP BY im."itemId"
+        ) as media
+      ON media."itemId" = i."id"
+
       LEFT JOIN "SellerProfile" sp ON sp."id" = i."sellerId"
+
       LEFT JOIN 
         (
           SELECT 
@@ -60,13 +123,15 @@ export class ItemService {
             selleritems."averageRating" as "averageRating"
           FROM
             "User" u
+
           JOIN "SellerProfile" sp ON sp."id" = u."sellerProfileId"
+
           LEFT JOIN "Item" i ON i."sellerId" = sp."id"
 
           LEFT JOIN
             (
               SELECT
-                AVG(br.stars) as "averageRating",
+                ROUND(AVG(COALESCE(br.stars,0)),2) as "averageRating",
                 i."sellerId" as "sellerId"
               FROM
                 "Item" i
@@ -78,7 +143,57 @@ export class ItemService {
         ) as seller
       ON seller."id" = i."sellerId"
       WHERE
-          i."id" IS NOT NULL
+          ${whereQueries.join(' AND ')}
+      GROUP BY  
+        i."name", i."condition", i."price", seller."id",
+        seller."name", seller."country", seller."averageRating",
+        media."urls", i."brandId", brand."categoryId",i.id,
+        fav."userId", fav."liked", i."releasedUnits", i."unitsLeft"
+      ORDER BY ${sortBy} ${sortDirection}
+      LIMIT ${limit} OFFSET (${(page - 1) * limit})
     `;
+
+    const queryResult: ItemResultDTO[] =
+      await this.prismaService.$queryRawUnsafe(sql);
+
+    const baseWhere: Prisma.ItemWhereInput = {
+      ...((categoryId || brandId) && {
+        brand: {
+          ...(brandId && { id: brandId }),
+          ...(categoryId && { categoryId }),
+        },
+      }),
+      price: { gte: minPrice, ...(maxPrice && { lte: maxPrice }) },
+      ...(country && {
+        seller: {
+          user: {
+            country: { contains: country, mode: Prisma.QueryMode.insensitive },
+          },
+        },
+      }),
+      ...(condition && { condition }),
+      status: { not: ITEM_SUBMISSION_STATUS.ADMIN_REJECTED },
+    };
+
+    const where = search
+      ? search
+          .split(' ')
+          .map((f) => f.trim())
+          .filter(Boolean)
+          .map((str) => ({
+            ...baseWhere,
+            name: { contains: str, mode: Prisma.QueryMode.insensitive },
+          }))
+      : [baseWhere];
+
+    const total = await this.prismaService.item.count({ where: { OR: where } });
+
+    return ManyItemsResult.from(queryResult, {
+      page,
+      limit,
+      status: 201,
+      message: 'Items Fetched',
+      total,
+    });
   }
 }

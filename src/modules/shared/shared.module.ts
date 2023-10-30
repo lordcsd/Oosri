@@ -5,8 +5,9 @@ import { PrismaService } from './prisma.service';
 import { MemoryStoredFile, NestjsFormDataModule } from 'nestjs-form-data';
 import { configConstants } from '../../config/configConstants';
 import { Encryptor } from '../../utils/encryptor';
+import { SharedService } from './shared.service';
 
-const providersAndExports = [PrismaService, Encryptor];
+const providersAndExports = [PrismaService, Encryptor, SharedService];
 
 const jwt = JwtModule.registerAsync({
   imports: [ConfigModule],

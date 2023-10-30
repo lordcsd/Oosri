@@ -4,6 +4,7 @@ import { ItemService } from './item.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { CategoryAndBrandsResult } from './results/category-and-brand.result';
 import { GetItemsDTO } from './dto/get-items.dto';
+import { ManyItemsResult } from './results/get-items.result';
 
 @Controller('items')
 @ApiTags('Items')
@@ -19,7 +20,11 @@ export class ItemController {
 
   @Get('many')
   @Public()
+  @ApiResponse({
+    status: 201,
+    type: ManyItemsResult,
+  })
   async getItems(@Query() queries: GetItemsDTO) {
-    return await this.itemService.getItems(queries)
+    return await this.itemService.getItems(queries);
   }
 }
