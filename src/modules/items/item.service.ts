@@ -1,9 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
 import { CategoryAndBrandsResult } from './results/category-and-brand.result';
 import { GetItemsDTO } from './dto/get-items.dto';
 import { ItemResultDTO, ManyItemsResult } from './results/get-items.result';
 import { ITEM_SUBMISSION_STATUS, Prisma } from '@prisma/client';
+import {
+  CartResultDTO,
+  GetCartResult,
+} from './results/add-item-to-cart.result';
+import { checkoutSelect } from './types/checkout-select';
 
 @Injectable()
 export class ItemService {
@@ -195,5 +200,106 @@ export class ItemService {
       message: 'Items Fetched',
       total,
     });
+  }
+
+  async addItemToCart(itemIds: number[], userId: number) {
+    const user = await this.prismaService.user.findFirst({
+      where: { id: userId },
+      include: {
+        buyerProfile: {
+          include: {
+            checkouts: {
+              where: { isCart: true },
+              select: checkoutSelect,
+            },
+          },
+        },
+      },
+    });
+
+    const cart =
+      user?.buyerProfile?.checkouts[0] ||
+      (await this.prismaService.checkout.create({
+        data: { buyer: { connect: { id: user.buyerProfileId } } },
+        select: checkoutSelect,
+      }));
+
+    const itemsNotAlreadyInCart = itemIds.filter(
+      (itemId) => !cart.items.find((_item) => itemId == _item.id),
+    );
+
+    const items = await this.prismaService.item.findMany({
+      where: { id: { in: itemsNotAlreadyInCart } },
+    });
+
+    if (!items.length) {
+      GetCartResult.from(cart, 201, 'Items Already Added');
+    }
+
+    const itemIdsNotFound = itemsNotAlreadyInCart.filter(
+      (itemId) => !items.find((_item) => itemId == _item.id),
+    );
+
+    if (itemIdsNotFound.length) {
+      throw new NotFoundException(
+        `item ids ${itemIdsNotFound.join()} as invalid`,
+      );
+    }
+
+    const updatedCart = await this.prismaService.checkout.update({
+      where: { id: cart.id },
+      data: {
+        items: {
+          createMany: { data: items.map((item) => ({ itemId: item.id })) },
+        },
+      },
+      select: checkoutSelect,
+    });
+
+    return GetCartResult.from(updatedCart, 201, 'Cart Updated');
+  }
+
+  async removeFromCart(ids: number[], userId: number) {
+    const user = await this.prismaService.user.findFirst({
+      where: { id: userId },
+      include: {
+        buyerProfile: {
+          include: {
+            checkouts: {
+              where: { isCart: true },
+              take: 1,
+              select: checkoutSelect,
+            },
+          },
+        },
+      },
+    });
+
+    const [_cart] = user.buyerProfile.checkouts;
+
+    if (!_cart || !_cart.items.length) {
+      throw new NotFoundException('Sorry Your Cart is empty');
+    }
+
+    const itemIdsNotInCart = ids.filter(
+      (id) => !_cart.items.find(({ item }) => item.id == id),
+    );
+
+    if (itemIdsNotInCart.length) {
+      throw new NotFoundException(
+        `item ids not in the cart ${itemIdsNotInCart.join()}`,
+      );
+    }
+
+    await this.prismaService.checkoutItem.deleteMany({
+      where: { itemId: { in: ids } },
+    });
+
+    const cart = await this.prismaService.checkout.findFirst({
+      where: { isCart: true, buyer: { user: { id: userId } } },
+      select: checkoutSelect,
+    });
+
+    return GetCartResult.from(cart, 201, 'Items Removed');
   }
 }

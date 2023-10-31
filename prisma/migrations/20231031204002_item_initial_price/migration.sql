@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Item" ADD COLUMN     "initialPrice" DOUBLE PRECISION NOT NULL DEFAULT 0;

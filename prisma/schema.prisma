@@ -69,8 +69,8 @@ model Transaction {
 
 model Checkout {
   id              Int             @id @default(autoincrement())
-  transaction     Transaction     @relation(references: [id], fields: [transactionId])
-  transactionId   Int             @unique
+  transaction     Transaction?    @relation(references: [id], fields: [transactionId])
+  transactionId   Int?            @unique    
   isCart          Boolean         @default(true)
   items           CheckoutItem[]  
   buyer           BuyerProfile    @relation(references: [id], fields: [buyerId])
@@ -94,9 +94,9 @@ model CheckoutItem {
   item            Item                    @relation(references: [id], fields: [itemId])
   itemId          Int                     
   units           Int                     @default(1)
-  review          BuyerReview     @relation(references: [id], fields: [reviewId])
-  reviewId        Int             @unique
-  soldAt          Float             
+  review          BuyerReview?            @relation(references: [id], fields: [reviewId])
+  reviewId        Int?                    @unique
+  soldAt          Float?             
   status          CHECKOUT_ITEM_STATUS    @default(PENDING)
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
@@ -118,7 +118,8 @@ model Item {
   id             Int                          @id @default(autoincrement())
   name           String
   description    String?
-  price          Float                        
+  price          Float
+  initialPrice   Float                        @default(0)                      
   releasedUnits  Int          
   unitsLeft      Int          
   color          ItemColor                    @relation(references: [id], fields: [colorId])
