@@ -8,3 +8,18 @@ export const GetCurrentUserId = createParamDecorator(
     return user.id;
   },
 );
+
+export interface UserDTO {
+  id: number;
+  buyerProfileId?: number;
+  sellerProfileId?: number;
+}
+
+export const GetCurrentUser = createParamDecorator(
+  (_: undefined, context: ExecutionContext): UserDTO => {
+    const request = context.switchToHttp().getRequest();
+    const { id, buyerProfileId, sellerProfileId } = request.user as UserDTO;
+
+    return { id, buyerProfileId, sellerProfileId };
+  },
+);

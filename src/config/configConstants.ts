@@ -7,7 +7,7 @@ export const configConstants = {
   },
   cloudinary: {
     providerName: 'Cloudinary',
-    projectFolder: 'campus_buy',
+    projectFolder: 'oosri',
     name: 'CLOUDINARY_NAME',
     apiKey: 'CLOUDINARY_API_KEY',
     apiSecret: 'CLOUDINARY_SECRET',

@@ -1,5 +1,10 @@
-import { Body, Controller, Get, Patch, Put, Query } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Patch, Post, Put, Query } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ItemService } from './item.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { CategoryAndBrandsResult } from './results/category-and-brand.result';
@@ -7,14 +12,36 @@ import { GetItemsDTO } from './dto/get-items.dto';
 import { ManyItemsResult } from './results/get-items.result';
 import { CheckUserType } from '../../common/decorators/check-user-group.decorator';
 import { USER_TYPE } from '../../common/enum/user-types.enum';
-import { GetCurrentUserId } from '../../common/decorators/get-current-user-id.decorator';
+import {
+  GetCurrentUser,
+  GetCurrentUserId,
+  UserDTO,
+} from '../../common/decorators/get-current-user-id.decorator';
 import { ItemIdsDTO } from './dto/item.dto';
 import { GetCartResult } from './results/add-item-to-cart.result';
+import { FormDataRequest } from 'nestjs-form-data';
+import { SubmitItemDTO } from './dto/sumbit-items.dto';
 
 @Controller('items')
 @ApiTags('Items')
 export class ItemController {
   constructor(private readonly itemService: ItemService) {}
+
+  @Post('')
+  @CheckUserType(USER_TYPE.SELLER)
+  @ApiBearerAuth()
+  @FormDataRequest({ autoDeleteFile: true, limits: { files: 4 } })
+  @ApiConsumes('multipart/form-data')
+  @ApiResponse({
+    status: 200,
+    type: SubmitItemDTO,
+  })
+  async createCategory(
+    @Body() details: SubmitItemDTO,
+    @GetCurrentUser() { id: userId, sellerProfileId }: UserDTO,
+  ) {
+    return this.itemService.submitItem(details, userId);
+  }
 
   @Get('categories-and-brands')
   @Public()
