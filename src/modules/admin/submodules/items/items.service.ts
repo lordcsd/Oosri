@@ -51,7 +51,7 @@ export class AdminItemService {
 
     const idValid = fetched.find((one) => one.id == id);
 
-    if (id && idValid) {
+    if (id && !idValid) {
       throw new NotFoundException('Invalid Item id');
     }
 
@@ -146,7 +146,7 @@ export class AdminItemService {
     });
 
     const idValid = fetched.find((one) => one.id == id);
-    if (id && idValid) {
+    if (id && !idValid) {
       throw new NotFoundException('Invalid Item id');
     }
 
@@ -241,12 +241,12 @@ export class AdminItemService {
     });
 
     const exist = id && fetched.find((one) => one.id == id);
-    if (exist) {
+    if (id && !exist) {
       throw new NotFoundException('Invalid Id');
     }
 
     const nameInUse = name && fetched.find((one) => one.name == name);
-    if (nameInUse && nameInUse.id != exist?.id) {
+    if (nameInUse && nameInUse.id != exist.id) {
       throw new ConflictException('Color name aleady in use');
     }
 
