@@ -163,7 +163,7 @@ model ItemCategory {
   id              Int             @id @default(autoincrement())
   name            String
   imageUrl        String?
-  imageProvider   String?
+  imageProviderId String?
   brands          ItemBrand[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -176,7 +176,7 @@ model ItemBrand {
   categoryId      Int
   items           Item[]
   imageUrl        String?
-  imageProvider   String?
+  imageProviderId String?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 }
@@ -186,6 +186,17 @@ model ItemColor {
   name            String          @unique
   hexcode         String          @unique
   items           Item[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model Admin {
+  id              Int             @id @default(autoincrement())
+  name            String
+  password        String
+  email           String          @unique   
+  type            String
+  createdBy       Int?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 }

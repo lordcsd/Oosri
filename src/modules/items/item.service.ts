@@ -9,7 +9,6 @@ import { GetItemsDTO } from './dto/get-items.dto';
 import { ItemResultDTO, ManyItemsResult } from './results/get-items.result';
 import { ITEM_SUBMISSION_STATUS, Prisma } from '@prisma/client';
 import {
-  CartResultDTO,
   GetCartResult,
 } from './results/add-item-to-cart.result';
 import { checkoutSelect } from './types/checkout-select';
@@ -19,6 +18,8 @@ import {
   MediaFolderEnum,
 } from '../../utils/media/cloudinary.service';
 import { SubmitItemResult } from './results/submit-item.result';
+import { GetColorsDTO } from './dto/get-colors.dto';
+import { ItemColorsResult } from './results/get-colors.result';
 
 @Injectable()
 export class ItemService {
@@ -311,7 +312,7 @@ export class ItemService {
     });
 
     if (!items.length) {
-      GetCartResult.from(cart, 201, 'Items Already Added');
+      return GetCartResult.from(cart, 201, 'Items Already Added');
     }
 
     const itemIdsNotFound = itemsNotAlreadyInCart.filter(
@@ -379,5 +380,24 @@ export class ItemService {
     });
 
     return GetCartResult.from(cart, 201, 'Items Removed');
+  }
+
+  async getColors({ search }: GetColorsDTO) {
+    const where: Prisma.ItemColorWhereInput = {
+      ...(search && {
+        name: { contains: search, mode: Prisma.QueryMode.insensitive },
+      }),
+    };
+
+    const colors = await this.prismaService.itemColor.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        hexcode: true,
+      },
+    });
+
+    return ItemColorsResult.from(colors, 201, 'Item colors fetched');
   }
 }

@@ -1,6 +1,6 @@
-import { CustomStringValidator } from 'nestjs-custom-class-validators';
+import { CustomNumberValidator } from 'nestjs-custom-class-validators';
 
 export class IdDTO {
-  @CustomStringValidator({ isUUID: true })
-  id: string;
+  @CustomNumberValidator({})
+  id: number;
 }

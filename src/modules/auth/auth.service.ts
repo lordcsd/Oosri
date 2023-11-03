@@ -15,6 +15,7 @@ import { BuyerLoginResult, SellerLoginResult } from './results/login.result';
 import { Encryptor } from '../../utils/encryptor';
 import { UserProfileResult } from './results/user-profile.dto';
 import { USER_TYPE } from '../../common/enum/user-types.enum';
+import { ADMIN_TYPE } from '../../common/enum/admin-types.enum';
 
 @Injectable()
 export class AuthService {
@@ -141,7 +142,7 @@ export class AuthService {
     return UserProfileResult.from(user, 201, 'User Profile Fetched');
   }
 
-  sign(payload: { id: number; role: USER_TYPE }): JWT_Tokens {
+  sign(payload: { id: number; role: USER_TYPE | ADMIN_TYPE }): JWT_Tokens {
     const accessToken = this.encryptor.encrypt(
       jwt.sign(payload, this.configService.get(configConstants.jwt.secret), {
         expiresIn: '1h',

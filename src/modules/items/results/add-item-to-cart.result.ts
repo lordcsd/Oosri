@@ -1,21 +1,24 @@
 import { ITEM_CONDITION } from '@prisma/client';
 import { BaseResultWithData } from '../../../results/baseResultWithData.result';
 import { ApiProperty } from '@nestjs/swagger';
+import { IdDTO } from '../../../common/dtos/id.dto';
 
-export class ItemColorDTO {
+export class IdAndNameDTO extends IdDTO {
   @ApiProperty()
   id: number;
-
-  @ApiProperty()
-  name: string;
 }
 
-export class CategoryResultDTO extends ItemColorDTO {
+export class ItemColorDTO extends IdAndNameDTO {
+  @ApiProperty()
+  hexcode: string;
+}
+
+export class CategoryResultDTO extends IdAndNameDTO {
   @ApiProperty()
   imageUrl: string;
 }
 
-export class BrandResultDTO extends ItemColorDTO {
+export class BrandResultDTO extends IdAndNameDTO {
   @ApiProperty()
   imageUrl: string;
 

@@ -4,7 +4,11 @@ import { DynamicModulesOptions } from '../../common/dtos/dynamic-module-options'
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 
-@Module({ imports: [], providers: [JwtStrategy, AuthService] })
+@Module({
+  imports: [],
+  providers: [JwtStrategy, AuthService],
+  exports: [AuthService],
+})
 export class AuthModule {
   static register({
     renderControllers = true,

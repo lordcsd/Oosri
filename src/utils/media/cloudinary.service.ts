@@ -7,6 +7,8 @@ import { configConstants } from '../../config/configConstants';
 export enum MediaFolderEnum {
   PROFILE_IMAGE = 'profile-image',
   PRODUCT_MEDIA = 'product-media',
+  CATEGORY_IMAGE = 'category-image',
+  BRAND_IMAGE = 'brand-image',
 }
 
 @Injectable()

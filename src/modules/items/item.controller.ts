@@ -21,6 +21,8 @@ import { ItemIdsDTO } from './dto/item.dto';
 import { GetCartResult } from './results/add-item-to-cart.result';
 import { FormDataRequest } from 'nestjs-form-data';
 import { SubmitItemDTO } from './dto/sumbit-items.dto';
+import { ItemColorsResult } from './results/get-colors.result';
+import { GetColorsDTO } from './dto/get-colors.dto';
 
 @Controller('items')
 @ApiTags('Items')
@@ -81,5 +83,15 @@ export class ItemController {
     @Body() payload: ItemIdsDTO,
   ) {
     return this.itemService.removeFromCart(payload.ids, id);
+  }
+
+  @Get('colors')
+  @Public()
+  @ApiResponse({
+    type: ItemColorsResult,
+    status: 201,
+  })
+  async getColors(@Query() options: GetColorsDTO) {
+    return this.itemService.getColors(options);
   }
 }
