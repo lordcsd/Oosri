@@ -86,6 +86,7 @@ export class ItemService {
             },
           }),
       },
+      include: { media: true },
     });
 
     return SubmitItemResult.from(item, 'Item Submitted', 200);
@@ -269,6 +270,10 @@ export class ItemService {
       : [baseWhere];
 
     const total = await this.prismaService.item.count({ where: { OR: where } });
+
+    for (const item of queryResult) {
+      item.liked = Boolean(item.liked);
+    }
 
     return ManyItemsResult.from(queryResult, {
       page,

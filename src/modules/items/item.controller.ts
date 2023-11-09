@@ -41,9 +41,9 @@ export class ItemController {
   })
   async createCategory(
     @Body() details: SubmitItemDTO,
-    @GetCurrentUser() { id: userId, sellerProfileId }: UserDTO,
+    @GetCurrentUser() { sellerProfileId }: UserDTO,
   ) {
-    return this.itemService.submitItem(details, userId);
+    return this.itemService.submitItem(details, sellerProfileId);
   }
 
   @Get('categories-and-brands')

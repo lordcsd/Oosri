@@ -9,6 +9,18 @@ class ItemMediaDTO {
 
   @ApiProperty()
   url: string;
+
+  @ApiProperty()
+  providerId: string;
+
+  @ApiProperty()
+  itemId: number;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
 }
 
 export class SubmittedItemDTO {
@@ -43,7 +55,7 @@ export class SubmittedItemDTO {
   condition: ITEM_CONDITION;
 
   @ApiProperty({ type: ItemMediaDTO })
-  media?: ItemMediaDTO;
+  media?: ItemMediaDTO[];
 }
 
 export class SubmitItemResult extends BaseResultWithData {
