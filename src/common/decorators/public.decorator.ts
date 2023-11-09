@@ -4,4 +4,6 @@ import { SetMetadata } from '@nestjs/common';
  * i.e access without authorization
  * By default, all routes are protected
  */
-export const Public = () => SetMetadata('isPublic', true);
+
+export const isPublic = 'isPublic'
+export const Public = () => SetMetadata(isPublic, true);

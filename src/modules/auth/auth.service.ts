@@ -95,25 +95,23 @@ export class AuthService {
 
     delete user.password;
 
-    if (isSeller) {
-      return SellerLoginResult.from(
-        {
-          ...user,
-          tokens: this.sign({ id: user.id, role: USER_TYPE.SELLER }),
-        },
-        'Login Successful',
-        201,
-      );
-    } else {
-      BuyerLoginResult.from(
-        {
-          ...user,
-          tokens: this.sign({ id: user.id, role: USER_TYPE.BUYER }),
-        },
-        'Login Successful',
-        201,
-      );
-    }
+    return isSeller
+      ? SellerLoginResult.from(
+          {
+            ...user,
+            tokens: this.sign({ id: user.id, role: USER_TYPE.SELLER }),
+          },
+          'Login Successful',
+          201,
+        )
+      : BuyerLoginResult.from(
+          {
+            ...user,
+            tokens: this.sign({ id: user.id, role: USER_TYPE.BUYER }),
+          },
+          'Login Successful',
+          201,
+        );
   }
 
   async getProfile(id: number) {

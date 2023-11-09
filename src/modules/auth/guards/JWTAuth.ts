@@ -16,6 +16,8 @@ import { configConstants } from '../../../config/configConstants';
 import { PrismaService } from '../../shared/prisma.service';
 import { ADMIN_TYPE } from '../../../common/enum/admin-types.enum';
 import { CHECK_ADMIN_TYPE } from '../../../common/decorators/check-admin-group.decorator';
+import { isPublic } from '../../../common/decorators/public.decorator';
+import { isHybrid } from '../../../common/decorators/hybrid.decorator';
 
 @Injectable()
 export class JWTAuthGuard extends AuthGuard('jwt') {
@@ -29,13 +31,19 @@ export class JWTAuthGuard extends AuthGuard('jwt') {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isPublic = this.reflector.getAllAndOverride('isPublic', [
+    const _public = this.reflector.getAllAndOverride(isPublic, [
       context.getHandler(),
       context.getClass(),
     ]);
-    if (isPublic) return true;
+
+    const _hybrid = this.reflector.getAllAndOverride(isHybrid, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     const req = context.switchToHttp().getRequest();
+    if (_public || (_hybrid && !req.headers?.authorization)) return true;
+
     const token = req.headers?.authorization.replace('Bearer ', '');
     const plainToken = this.encryptor.decrypt(token);
     const decoded = decode(plainToken, {}) as JwtPayload;

@@ -8,9 +8,7 @@ import { CategoryAndBrandsResult } from './results/category-and-brand.result';
 import { GetItemsDTO } from './dto/get-items.dto';
 import { ItemResultDTO, ManyItemsResult } from './results/get-items.result';
 import { ITEM_SUBMISSION_STATUS, Prisma } from '@prisma/client';
-import {
-  GetCartResult,
-} from './results/add-item-to-cart.result';
+import { GetCartResult } from './results/add-item-to-cart.result';
 import { checkoutSelect } from './types/checkout-select';
 import { SubmitItemDTO } from './dto/sumbit-items.dto';
 import {

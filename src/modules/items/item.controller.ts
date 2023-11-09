@@ -23,6 +23,7 @@ import { FormDataRequest } from 'nestjs-form-data';
 import { SubmitItemDTO } from './dto/sumbit-items.dto';
 import { ItemColorsResult } from './results/get-colors.result';
 import { GetColorsDTO } from './dto/get-colors.dto';
+import { Hybrid } from '../../common/decorators/hybrid.decorator';
 
 @Controller('items')
 @ApiTags('Items')
@@ -53,13 +54,18 @@ export class ItemController {
   }
 
   @Get('many')
-  @Public()
+  @Hybrid()
+  @CheckUserType(USER_TYPE.BUYER)
+  @ApiBearerAuth()
   @ApiResponse({
     status: 201,
     type: ManyItemsResult,
   })
-  async getItems(@Query() queries: GetItemsDTO) {
-    return await this.itemService.getItems(queries);
+  async getItems(
+    @Query() queries: GetItemsDTO,
+    @GetCurrentUserId() userId: number,
+  ) {
+    return await this.itemService.getItems(queries, userId);
   }
 
   @Put('add-to-cart')
