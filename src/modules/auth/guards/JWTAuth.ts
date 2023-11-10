@@ -44,9 +44,13 @@ export class JWTAuthGuard extends AuthGuard('jwt') {
     const req = context.switchToHttp().getRequest();
     if (_public || (_hybrid && !req.headers?.authorization)) return true;
 
-    const token = req.headers?.authorization.replace('Bearer ', '');
+    const token = req.headers?.authorization?.replace('Bearer ', '');
     const plainToken = this.encryptor.decrypt(token);
     const decoded = decode(plainToken, {}) as JwtPayload;
+
+    if (!req.headers?.authorization || !decoded) {
+      throw new UnauthorizedException('ACESS DENIED');
+    }
 
     const userTypes: USER_TYPE[] = this.reflector.getAllAndOverride(
       CHECK_USER_TYPE,

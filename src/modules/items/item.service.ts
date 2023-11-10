@@ -314,6 +314,19 @@ export class ItemService {
       where: { id: { in: itemsNotAlreadyInCart } },
     });
 
+    if (
+      itemIds.length &&
+      itemsNotAlreadyInCart.length &&
+      itemsNotAlreadyInCart.length > items.length
+    ) {
+      const invalidIds = itemIds.filter(
+        (id) =>
+          itemsNotAlreadyInCart.includes(id) &&
+          !items.find((item) => item.id == id),
+      );
+      throw new NotFoundException(`item ids ${invalidIds.join()} are invalid`);
+    }
+
     if (!items.length) {
       return GetCartResult.from(cart, 201, 'Items Already Added');
     }
@@ -339,6 +352,27 @@ export class ItemService {
     });
 
     return GetCartResult.from(updatedCart, 201, 'Cart Updated');
+  }
+
+  async getCart(id: number) {
+    const buyerProfile = await this.prismaService.buyerProfile.findFirst({
+      where: { user: { id } },
+      include: {
+        checkouts: {
+          where: { isCart: true },
+          select: checkoutSelect,
+        },
+      },
+    });
+
+    const cart =
+      buyerProfile?.checkouts[0] ||
+      (await this.prismaService.checkout.create({
+        data: { buyer: { connect: { id: buyerProfile.id } } },
+        select: checkoutSelect,
+      }));
+
+    return GetCartResult.from(cart, 201, 'Cart Fetched');
   }
 
   async removeFromCart(ids: number[], userId: number) {

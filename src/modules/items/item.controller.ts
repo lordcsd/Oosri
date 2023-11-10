@@ -79,8 +79,18 @@ export class ItemController {
     return this.itemService.addItemToCart(payload.ids, id);
   }
 
-  @Patch('remove-from-cart')
+  @Get('cart')
   @CheckUserType(USER_TYPE.BUYER)
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 201,
+    type: GetCartResult,
+  })
+  async getCart(@GetCurrentUser() { id }: UserDTO) {
+    return this.itemService.getCart(id);
+  }
+
+  @Patch('remove-from-cart')
   @ApiResponse({
     status: 201,
     type: GetCartResult,
