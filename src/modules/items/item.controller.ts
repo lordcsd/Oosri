@@ -17,13 +17,14 @@ import {
   GetCurrentUserId,
   UserDTO,
 } from '../../common/decorators/get-current-user-id.decorator';
-import { ItemIdsDTO } from './dto/item.dto';
 import { GetCartResult } from './results/add-item-to-cart.result';
 import { FormDataRequest } from 'nestjs-form-data';
 import { SubmitItemDTO } from './dto/sumbit-items.dto';
 import { ItemColorsResult } from './results/get-colors.result';
 import { GetColorsDTO } from './dto/get-colors.dto';
 import { Hybrid } from '../../common/decorators/hybrid.decorator';
+import { AddItemsToCartDTO } from './dto/item.dto';
+import { IdsDTO } from '../../common/dtos/id.dto';
 
 @Controller('items')
 @ApiTags('Items')
@@ -75,8 +76,11 @@ export class ItemController {
     status: 201,
     type: GetCartResult,
   })
-  async addToCart(@GetCurrentUserId() id: number, @Body() payload: ItemIdsDTO) {
-    return this.itemService.addItemToCart(payload.ids, id);
+  async addToCart(
+    @GetCurrentUserId() id: number,
+    @Body() payload: AddItemsToCartDTO,
+  ) {
+    return this.itemService.addItemToCart(payload, id);
   }
 
   @Get('cart')
@@ -91,15 +95,31 @@ export class ItemController {
   }
 
   @Patch('remove-from-cart')
+  @CheckUserType(USER_TYPE.BUYER)
+  @ApiBearerAuth()
   @ApiResponse({
     status: 201,
     type: GetCartResult,
   })
   async removeFromCart(
     @GetCurrentUserId() id: number,
-    @Body() payload: ItemIdsDTO,
+    @Body() { ids }: IdsDTO,
   ) {
-    return this.itemService.removeFromCart(payload.ids, id);
+    return this.itemService.removeFromCart(ids, id);
+  }
+
+  @Patch('cart-item-units')
+  @ApiResponse({
+    status: 201,
+    type: GetCartResult,
+  })
+  @CheckUserType(USER_TYPE.BUYER)
+  @ApiBearerAuth()
+  async UpdateCartItemUnits(
+    @GetCurrentUserId() id: number,
+    @Body() payload: AddItemsToCartDTO,
+  ) {
+    return this.itemService.updateCartItemUnit(payload, id);
   }
 
   @Get('colors')

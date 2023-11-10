@@ -14,7 +14,8 @@ export const checkoutSelect = {
           description: true,
           price: true,
           condition: true,
-          color: { select: { id: true, name: true , hexcode: true} },
+          unitsLeft: true,
+          color: { select: { id: true, name: true, hexcode: true } },
           sellerId: true,
           createdAt: true,
           brand: {

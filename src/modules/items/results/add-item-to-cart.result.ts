@@ -78,6 +78,7 @@ export class CartResultDTO {
 }
 
 export class GetCartResult extends BaseResultWithData {
+  @ApiProperty({ type: CartResultDTO })
   data: CartResultDTO;
 
   static from(

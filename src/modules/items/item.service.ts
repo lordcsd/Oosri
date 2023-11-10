@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
 import { CategoryAndBrandsResult } from './results/category-and-brand.result';
@@ -18,6 +19,7 @@ import {
 import { SubmitItemResult } from './results/submit-item.result';
 import { GetColorsDTO } from './dto/get-colors.dto';
 import { ItemColorsResult } from './results/get-colors.result';
+import { AddItemsToCartDTO, ItemDTO } from './dto/item.dto';
 
 @Injectable()
 export class ItemService {
@@ -284,7 +286,7 @@ export class ItemService {
     });
   }
 
-  async addItemToCart(itemIds: number[], userId: number) {
+  private async upsertUserCart(userId: number) {
     const user = await this.prismaService.user.findFirst({
       where: { id: userId },
       include: {
@@ -299,79 +301,111 @@ export class ItemService {
       },
     });
 
-    const cart =
+    return (
       user?.buyerProfile?.checkouts[0] ||
       (await this.prismaService.checkout.create({
         data: { buyer: { connect: { id: user.buyerProfileId } } },
         select: checkoutSelect,
-      }));
+      }))
+    );
+  }
+
+  async addItemToCart(payload: AddItemsToCartDTO, userId: number) {
+    const cart = await this.upsertUserCart(userId);
+    const itemIds = payload.items.map(({ id }) => id);
 
     const itemsNotAlreadyInCart = itemIds.filter(
-      (itemId) => !cart.items.find((_item) => itemId == _item.id),
+      (itemId) => !cart.items.find((_item) => itemId == _item.item.id),
     );
 
     const items = await this.prismaService.item.findMany({
-      where: { id: { in: itemsNotAlreadyInCart } },
+      where: { id: { in: itemsNotAlreadyInCart }, unitsLeft: { gte: 1 } },
     });
 
-    if (
-      itemIds.length &&
-      itemsNotAlreadyInCart.length &&
-      itemsNotAlreadyInCart.length > items.length
-    ) {
+    const notFoundOrUnavailable = itemIds.filter(
+      (id) => !items.find((one) => one.id == id),
+    );
+    if (notFoundOrUnavailable.length) {
+      throw new NotFoundException(
+        `Items with ids: ${notFoundOrUnavailable.join()}, were either out of stock or invalid`,
+      );
+    }
+
+    if (itemsNotAlreadyInCart.length) {
       const invalidIds = itemIds.filter(
         (id) =>
           itemsNotAlreadyInCart.includes(id) &&
           !items.find((item) => item.id == id),
       );
-      throw new NotFoundException(`item ids ${invalidIds.join()} are invalid`);
-    }
-
-    if (!items.length) {
+      if (invalidIds.length) {
+        throw new NotFoundException(
+          `item ids ${invalidIds.join()} are invalid`,
+        );
+      }
+    } else {
       return GetCartResult.from(cart, 201, 'Items Already Added');
     }
 
-    const itemIdsNotFound = itemsNotAlreadyInCart.filter(
-      (itemId) => !items.find((_item) => itemId == _item.id),
-    );
+    // check if items have enough units
+    const insufficient: { id: number; left: number; required: number }[] = [];
+    for (const fetchedItem of items) {
+      const _item = payload.items.find((one) => one.id == fetchedItem.id);
+      if (_item && fetchedItem.unitsLeft < _item.units) {
+        insufficient.push({
+          id: _item.id,
+          left: fetchedItem.unitsLeft,
+          required: _item.id,
+        });
+      }
+    }
 
-    if (itemIdsNotFound.length) {
-      throw new NotFoundException(
-        `item ids ${itemIdsNotFound.join()} as invalid`,
+    if (insufficient.length) {
+      throw new UnprocessableEntityException(
+        insufficient
+          .map(
+            ({ id, left, required }) =>
+              `You required ${required} units of item with id ${id}, but only ${left} is left`,
+          )
+          .join(),
       );
     }
 
-    const updatedCart = await this.prismaService.checkout.update({
-      where: { id: cart.id },
-      data: {
-        items: {
-          createMany: { data: items.map((item) => ({ itemId: item.id })) },
+    await this.prismaService.$transaction([
+      this.prismaService.checkout.update({
+        where: { id: cart.id },
+        data: {
+          items: {
+            createMany: {
+              data: items.map((item) => ({
+                itemId: item.id,
+                units: payload.items.find((_item) => _item.id == item.id)
+                  ?.units,
+              })),
+            },
+          },
         },
-      },
-      select: checkoutSelect,
-    });
+        select: checkoutSelect,
+      }),
+      ...items.map((item) =>
+        this.prismaService.item.update({
+          where: { id: item.id },
+          data: {
+            unitsLeft: {
+              decrement: payload.items.find((_item) => _item.id == item.id)
+                .units,
+            },
+          },
+        }),
+      ),
+    ]);
+
+    const updatedCart = await this.upsertUserCart(userId);
 
     return GetCartResult.from(updatedCart, 201, 'Cart Updated');
   }
 
   async getCart(id: number) {
-    const buyerProfile = await this.prismaService.buyerProfile.findFirst({
-      where: { user: { id } },
-      include: {
-        checkouts: {
-          where: { isCart: true },
-          select: checkoutSelect,
-        },
-      },
-    });
-
-    const cart =
-      buyerProfile?.checkouts[0] ||
-      (await this.prismaService.checkout.create({
-        data: { buyer: { connect: { id: buyerProfile.id } } },
-        select: checkoutSelect,
-      }));
-
+    const cart = await this.upsertUserCart(id);
     return GetCartResult.from(cart, 201, 'Cart Fetched');
   }
 
@@ -411,12 +445,78 @@ export class ItemService {
       where: { itemId: { in: ids } },
     });
 
-    const cart = await this.prismaService.checkout.findFirst({
-      where: { isCart: true, buyer: { user: { id: userId } } },
-      select: checkoutSelect,
-    });
+    const cart = await this.upsertUserCart(userId);
 
     return GetCartResult.from(cart, 201, 'Items Removed');
+  }
+
+  async updateCartItemUnit(payload: AddItemsToCartDTO, userId: number) {
+    const { items } = payload;
+    let cart = await this.upsertUserCart(userId);
+
+    const invalidItems = items.filter(
+      (item) => !cart.items.find((_item) => _item.item.id == item.id),
+    );
+
+    if (invalidItems.length) {
+      throw new NotFoundException(
+        `Items with ids: ${invalidItems.map(
+          ({ id }) => id,
+        )}, were not on the cart`,
+      );
+    }
+
+    const insufficientUnits: { id: number; left: number; required: number }[] =
+      [];
+
+    for (const item of items) {
+      const cartItem = cart.items.find((_item) => _item.item.id == item.id);
+      if (cartItem.units + cartItem.item.unitsLeft < item.units) {
+        insufficientUnits.push({
+          id: item.id,
+          left: cartItem.item.unitsLeft + cartItem.units,
+          required: item.units,
+        });
+      }
+    }
+
+    if (insufficientUnits.length) {
+      throw new UnprocessableEntityException(
+        insufficientUnits
+          .map(
+            ({ id, left, required }) =>
+              `You required ${required} units of item with id ${id}, but only ${left} is left`,
+          )
+          .join(),
+      );
+    }
+    await this.prismaService.$transaction([
+      // update cart items
+      ...items.map((item) => {
+        const cartItem = cart.items.find((_item) => _item.item.id == item.id);
+        return this.prismaService.checkoutItem.update({
+          where: { id: cartItem.id },
+          data: { units: item.units },
+        });
+      }),
+      // update seller items
+      ...items.map((item) => {
+        const cartItem = cart.items.find((_item) => _item.item.id == item.id);
+
+        const unitsDifference = item.units - cartItem.units;
+
+        return this.prismaService.item.update({
+          where: { id: cartItem.item.id },
+          data: {
+            // return excesses or take more if necessary
+            unitsLeft: cartItem.item.unitsLeft - unitsDifference,
+          },
+        });
+      }),
+    ]);
+
+    cart = await this.upsertUserCart(userId);
+    return GetCartResult.from(cart, 201, 'Cart Updated');
   }
 
   async getColors({ search }: GetColorsDTO) {
