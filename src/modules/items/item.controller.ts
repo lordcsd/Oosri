@@ -70,6 +70,7 @@ export class ItemController {
 
   @Put('add-to-cart')
   @CheckUserType(USER_TYPE.BUYER)
+  @ApiBearerAuth()
   @ApiResponse({
     status: 201,
     type: GetCartResult,
