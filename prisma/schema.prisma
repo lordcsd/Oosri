@@ -153,7 +153,7 @@ model BuyerReview {
   item            Item           @relation(references: [id],fields: [itemId])
   itemId          Int   
   stars           Int            @default(0)
-  comment         String
+  comment         String?         
   checkoutItem    CheckoutItem?    
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt

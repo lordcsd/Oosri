@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { JWTAuthGuard } from './modules/auth/guards/JWTAuth';
 import { ItemModule } from './modules/items/item.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { SellerModule } from './modules/seller/seller.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AdminModule } from './modules/admin/admin.module';
     UserModule.register({ renderControllers: true }),
     AuthModule.register({ renderControllers: true }),
     ItemModule.register({ renderControllers: true }),
+    SellerModule.register({ renderControllers: true }),
     AdminModule,
   ],
   providers: [

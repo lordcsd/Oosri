@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiConsumes,
@@ -23,13 +23,13 @@ import { SubmitItemDTO } from './dto/sumbit-items.dto';
 import { ItemColorsResult } from './results/get-colors.result';
 import { GetColorsDTO } from './dto/get-colors.dto';
 import { Hybrid } from '../../common/decorators/hybrid.decorator';
-import { AddItemsToCartDTO } from './dto/item.dto';
-import { IdsDTO } from '../../common/dtos/id.dto';
+import { AddItemsToCartDTO, RateItemDTO } from './dto/item.dto';
+import { IdDTO, IdsDTO } from '../../common/dtos/id.dto';
 
 @Controller('items')
 @ApiTags('Items')
 export class ItemController {
-  constructor(private readonly itemService: ItemService) {}
+  constructor(private readonly itemService: ItemService) { }
 
   @Post('')
   @CheckUserType(USER_TYPE.SELLER)
@@ -131,4 +131,18 @@ export class ItemController {
   async getColors(@Query() options: GetColorsDTO) {
     return this.itemService.getColors(options);
   }
+
+  @Post('rate-item/:id')
+  @CheckUserType(USER_TYPE.BUYER)
+  @ApiBearerAuth()
+  async rateItem(
+    @Param() { id }: IdDTO,
+    @GetCurrentUserId() userId: number,
+    @Body() payload: RateItemDTO
+  ) {
+    return this.itemService.rateItem(
+      id, userId, payload
+    )
+  }
+
 }

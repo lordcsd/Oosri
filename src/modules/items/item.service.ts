@@ -19,7 +19,7 @@ import {
 import { SubmitItemResult } from './results/submit-item.result';
 import { GetColorsDTO } from './dto/get-colors.dto';
 import { ItemColorsResult } from './results/get-colors.result';
-import { AddItemsToCartDTO, ItemDTO } from './dto/item.dto';
+import { AddItemsToCartDTO, ItemDTO, RateItemDTO } from './dto/item.dto';
 
 @Injectable()
 export class ItemService {
@@ -536,5 +536,26 @@ export class ItemService {
     });
 
     return ItemColorsResult.from(colors, 201, 'Item colors fetched');
+  }
+
+  async rateItem(itemId: number, userId: number, payload: RateItemDTO) {
+    const buyerAndProfile = await this.prismaService.user.findFirst({
+      where: {
+        id: userId,
+        buyerProfile: {
+          checkouts: { some: { items: { some: { item: { id: itemId } } } } },
+        },
+      },
+      include: {
+        buyerProfile: {
+          include: {
+            checkouts: {
+              where: { items: { some: { item: { id: itemId } } } },
+              include: { items: { include: { item: true, review: true } } },
+            },
+          },
+        },
+      },
+    });
   }
 }

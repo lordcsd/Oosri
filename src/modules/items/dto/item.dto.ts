@@ -4,9 +4,11 @@ import {
   ArrayMinSize,
   IsInt,
   IsOptional,
+  Max,
   Min,
   ValidateNested,
 } from 'class-validator';
+import { CustomNumberValidator, CustomStringValidator } from 'nestjs-custom-class-validators';
 
 export class ItemDTO {
   @ApiProperty({ type: Number })
@@ -26,4 +28,15 @@ export class AddItemsToCartDTO {
   @Type(() => ItemDTO)
   @ArrayMinSize(1)
   items: ItemDTO[];
+}
+
+
+export class RateItemDTO {
+  @CustomNumberValidator({})
+  @Min(1)
+  @Max(5)
+  stars: number
+
+  @CustomStringValidator({})
+  comment: string
 }
