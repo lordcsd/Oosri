@@ -1,11 +1,12 @@
 import { DynamicModule, Module } from '@nestjs/common';
-import { SellerItemsService } from './seller-items.service';
+import { DynamicModulesOptions } from '../../../../common/dtos/dynamic-module-options';
+import { SellerItemService } from './seller-items.service';
 import { SellerItemsController } from './seller-items.controller';
-import { DynamicModulesOptions } from 'src/common/dtos/dynamic-module-options';
+import { MediaModule } from '../../../../utils/media/media.module';
 
 @Module({
-  imports: [],
-  providers: [SellerItemsService],
+  imports: [MediaModule],
+  providers: [SellerItemService],
 })
 export class SellerItemsModule {
   static register({

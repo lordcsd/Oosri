@@ -31,21 +31,7 @@ import { IdDTO, IdsDTO } from '../../common/dtos/id.dto';
 export class ItemController {
   constructor(private readonly itemService: ItemService) { }
 
-  @Post('')
-  @CheckUserType(USER_TYPE.SELLER)
-  @ApiBearerAuth()
-  @FormDataRequest({ autoDeleteFile: true, limits: { files: 4 } })
-  @ApiConsumes('multipart/form-data')
-  @ApiResponse({
-    status: 200,
-    type: SubmitItemDTO,
-  })
-  async createCategory(
-    @Body() details: SubmitItemDTO,
-    @GetCurrentUser() { sellerProfileId }: UserDTO,
-  ) {
-    return this.itemService.submitItem(details, sellerProfileId);
-  }
+
 
   @Get('categories-and-brands')
   @Public()
