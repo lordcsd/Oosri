@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 import { LoginDTO, RegisterDTO } from './dto/register.dto';
@@ -10,6 +10,8 @@ import { CheckUserType } from '../../common/decorators/check-user-group.decorato
 import { USER_TYPE } from '../../common/enum/user-types.enum';
 
 import { GetCurrentUserId } from '../../common/decorators/get-current-user-id.decorator';
+import { AuthGuard } from '@nestjs/passport';
+import { Request } from 'express';
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -59,5 +61,19 @@ export class AuthController {
   @ApiResponse({ type: SellerLoginResult, status: 200 })
   async loginSeller(@Body() payload: LoginDTO) {
     return await this.authService.login(payload, true);
+  }
+
+  // Google Auth
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleLogin(): Promise<void> {
+    // Initiates the Google OAuth2 login flow
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleLoginCallback(@Req() req: Request): Promise<void> {
+    // Handles the Google OAuth2 callback
+    // Redirect or respond as needed after successful login
   }
 }

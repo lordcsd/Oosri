@@ -42,6 +42,7 @@
     "nestjs-custom-class-validators": "^1.0.32",
     "nestjs-form-data": "^1.9.0",
     "passport": "^0.6.0",
+    "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
     "prisma": "5.0.0",
     "reflect-metadata": "^0.1.13",

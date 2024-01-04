@@ -12,4 +12,11 @@ export const configConstants = {
     apiKey: 'CLOUDINARY_API_KEY',
     apiSecret: 'CLOUDINARY_SECRET',
   },
+  google: {
+    auth: {
+      clientId: 'GOOGLE_CLIENT_ID',
+      clientSecret: 'GOOGLE_CLIENT_SECRET',
+      callbackUrl: 'GOOGLE_CALLBACK_URL',
+    },
+  },
 };

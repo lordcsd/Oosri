@@ -16,6 +16,7 @@ import { Encryptor } from '../../utils/encryptor';
 import { UserProfileResult } from './results/user-profile.dto';
 import { USER_TYPE } from '../../common/enum/user-types.enum';
 import { ADMIN_TYPE } from '../../common/enum/admin-types.enum';
+import { UserAuthProviderTypes } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -48,6 +49,12 @@ export class AuthService {
           : {
               buyerProfile: { create: {} },
             }),
+        authProviders: {
+          create: {
+            type: UserAuthProviderTypes.LOCAL,
+            password: payload.password,
+          },
+        },
       },
       select: {
         id: true,
@@ -82,18 +89,22 @@ export class AuthService {
         firstName: true,
         lastName: true,
         email: true,
-        password: true,
+        authProviders: true,
         phoneNumber: true,
         country: true,
         countryCode: true,
       },
     });
 
-    if (!user || (user && !compareSync(password, user.password))) {
+    const jwtAuth = user.authProviders.find(
+      (auth) => auth.type == UserAuthProviderTypes.LOCAL,
+    );
+
+    if (!user || (user && !compareSync(password, jwtAuth.password))) {
       throw new UnauthorizedException('Access Denied');
     }
 
-    delete user.password;
+    delete user.authProviders;
 
     return isSeller
       ? SellerLoginResult.from(
