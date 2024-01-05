@@ -19,4 +19,5 @@ export const configConstants = {
       callbackUrl: 'GOOGLE_CALLBACK_URL',
     },
   },
+  frontend: {rootURL :'FRONTEND_ROOT'}
 };

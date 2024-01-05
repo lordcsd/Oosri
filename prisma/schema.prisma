@@ -10,43 +10,52 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum PROFILE_IMAGE_PROVIDER {
+  CLOUDINARY
+  GOOGLE
+}
+
 model User {
-  id                    Int            @id @default(autoincrement())
+  id                    Int                     @id @default(autoincrement())
   firstName             String
   lastName              String
-  email                 String         @unique
-  emailVerified         Boolean        @default(false)
+  email                 String                  @unique
+  emailVerified         Boolean                 @default(false)
   phoneNumber           String?
   countryCode           String?
   country               String?
   profileImage          String?
-  profileImageProviders String?
+  profileImageProviders PROFILE_IMAGE_PROVIDER? @default(CLOUDINARY)
   transactions          Transaction[]
-  walletBalance         Float?         @default(0)
-  sellerProfile         SellerProfile? @relation(references: [id], fields: [sellerProfileId])
-  sellerProfileId       Int?           @unique
-  buyerProfile          BuyerProfile?  @relation(references: [id], fields: [buyerProfileId])
-  buyerProfileId        Int?           @unique
-  authProviders         UserAuthProvider[]
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
+  walletBalance         Float?                  @default(0)
+  sellerProfile         SellerProfile?          @relation(references: [id], fields: [sellerProfileId])
+  sellerProfileId       Int?                    @unique
+  buyerProfile          BuyerProfile?           @relation(references: [id], fields: [buyerProfileId])
+  buyerProfileId        Int?                    @unique
+  localAuth             UserLocalAuth?          @relation(references: [id], fields: [localAuthId])
+  localAuthId           Int?                    @unique
+  googleAuth            UserGoogleAuth?         @relation(references: [id], fields: [googleAuthId])
+  googleAuthId          Int?                    @unique
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
 }
 
-enum UserAuthProviderTypes {
-  LOCAL
-  GOOGLE
+model UserLocalAuth {
+  id           Int      @id @default(autoincrement())
+  user         User?
+  password     String
+  refreshToken String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
-model UserAuthProvider {
-  id                    Int                   @id @default(autoincrement())
-  type                  UserAuthProviderTypes @default(LOCAL)
-  user                  User                  @relation(references: [id], fields: [userId])
-  userId                Int
-  password              String? 
-  sessionStart          DateTime?
-  sessionEnd            DateTime?
-  createdAt             DateTime              @default(now())
-  updatedAt             DateTime              @updatedAt
+model UserGoogleAuth {
+  id                 Int       @id @default(autoincrement())
+  user               User?
+  tempToken          String
+  tempTokenExp       DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 model SellerProfile {

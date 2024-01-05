@@ -40,3 +40,17 @@ export class RegisterDTO extends LoginDTO {
   @CustomStringValidator({})
   country: string;
 }
+
+export class CompeteSignInOrRegisterWithGoogleDTO {
+  @CustomStringValidator({})
+  token: string;
+
+  @CustomStringValidator({ optional: true })
+  phoneNumber: string;
+
+  @CustomStringValidator({ optional: true })
+  countryCode: string;
+
+  @CustomStringValidator({optional:true})
+  country: string;
+}

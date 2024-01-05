@@ -1,14 +1,30 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
-import { LoginDTO, RegisterDTO } from './dto/register.dto';
+import {
+  CompeteSignInOrRegisterWithGoogleDTO,
+  LoginDTO,
+  RegisterDTO,
+} from './dto/register.dto';
 import { AuthService } from './auth.service';
 import { UserRegisterResultDTO } from './results/register.result';
 import { BuyerLoginResult, SellerLoginResult } from './results/login.result';
 import { UserProfileResult } from './results/user-profile.dto';
 import { CheckUserType } from '../../common/decorators/check-user-group.decorator';
 import { USER_TYPE } from '../../common/enum/user-types.enum';
-
 import { GetCurrentUserId } from '../../common/decorators/get-current-user-id.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
@@ -64,16 +80,24 @@ export class AuthController {
   }
 
   // Google Auth
+  @Public()
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleLogin(): Promise<void> {
-    // Initiates the Google OAuth2 login flow
-  }
+  async googleLogin(): Promise<void> {}
 
+  @Public()
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleLoginCallback(@Req() req: Request): Promise<void> {
-    // Handles the Google OAuth2 callback
-    // Redirect or respond as needed after successful login
+    return await this.authService.redirectGoogleUserToCompleteAuthProcess(req);
+  }
+
+  @Public()
+  @ApiOkResponse({ type: SellerLoginResult })
+  @Post('complete-google-sign-in-or-register')
+  async completeGoogleAuth(
+    @Body() payload: CompeteSignInOrRegisterWithGoogleDTO,
+  ) {
+    return await this.authService.completeGoogleAuth(payload);
   }
 }

@@ -8,13 +8,9 @@ import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
   imports: [
-    // PassportModule.register({ defaultStrategy: 'google', seesion: true }),
+    PassportModule.register({ defaultStrategy: 'google', seesion: true }),
   ],
-  providers: [
-    JwtStrategy,
-    AuthService,
-    // GoogleStrategy
-  ],
+  providers: [JwtStrategy, AuthService, GoogleStrategy],
   exports: [AuthService],
 })
 export class AuthModule {
