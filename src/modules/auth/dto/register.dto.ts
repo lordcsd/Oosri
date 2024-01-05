@@ -1,10 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsEmail } from 'class-validator';
+import { IsEmail, IsPhoneNumber } from 'class-validator';
 import {
+  CustomEnumValidator,
   CustomPasswordDecorator,
   CustomStringValidator,
 } from 'nestjs-custom-class-validators';
+import { USER_TYPE } from '../../../common/enum/user-types.enum';
 
 export class JWT_Tokens {
   @ApiProperty()
@@ -45,12 +47,16 @@ export class CompeteSignInOrRegisterWithGoogleDTO {
   @CustomStringValidator({})
   token: string;
 
+  @CustomEnumValidator({ validEnum: USER_TYPE })
+  userType: USER_TYPE;
+
   @CustomStringValidator({ optional: true })
+  @IsPhoneNumber()
   phoneNumber: string;
 
   @CustomStringValidator({ optional: true })
   countryCode: string;
 
-  @CustomStringValidator({optional:true})
+  @CustomStringValidator({ optional: true })
   country: string;
 }

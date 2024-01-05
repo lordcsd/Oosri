@@ -278,7 +278,7 @@ export class AuthService {
   }
 
   async completeGoogleAuth(payload: CompeteSignInOrRegisterWithGoogleDTO) {
-    const { token, ...otherFields } = payload; //phoneNumber, countryCode, country
+    const { token, userType, ...otherFields } = payload; //phoneNumber, countryCode, country
 
     const user = await this.prismaService.user.findFirst({
       where: { googleAuth: { tempToken: token } },
@@ -296,7 +296,11 @@ export class AuthService {
 
     const updatedUser = await this.prismaService.user.update({
       where: { id: user.id },
-      data: otherFields,
+      data: {
+        ...otherFields,
+        ...(userType == USER_TYPE.BUYER && { buyerProfile: { create: {} } }),
+        ...(userType == USER_TYPE.SELLER && { sellerProfile: { create: {} } }),
+      },
       select: {
         id: true,
         firstName: true,
