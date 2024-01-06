@@ -28,6 +28,14 @@ import { USER_TYPE } from '../../common/enum/user-types.enum';
 import { GetCurrentUserId } from '../../common/decorators/get-current-user-id.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
+import {
+  CompleteForgotPasswordDTO,
+  EmailVerificationDTO,
+  ForgotPasswordDTO,
+  ResetPasswordDTO,
+} from './dto/verification.dto';
+import { RefreshTokenDTO } from './dto/refresh-token.dto';
+import { BaseResult } from '../../results/base.result';
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -43,6 +51,45 @@ export class AuthController {
   })
   async getUserProfile(@GetCurrentUserId() userId: number) {
     return await this.authService.getProfile(userId);
+  }
+
+  @Get('resend-verification-email')
+  @Public()
+  @ApiOkResponse({ type: BaseResult })
+  async resendEmailVerification(@Query() queries: ForgotPasswordDTO) {
+    return this.authService.sendVerificationMail(queries);
+  }
+
+  @Post('complete-email-verification')
+  @Public()
+  @ApiOkResponse({ type: BaseResult })
+  async emailVerification(@Body() payload: EmailVerificationDTO) {
+    return this.authService.completeEmailVerification(payload);
+  }
+  
+  @Get('forgot-password')
+  @Public()
+  @ApiOkResponse({ type: BaseResult })
+  async forgetPassword(@Query() queries: ForgotPasswordDTO) {
+    return this.authService.forgotPassword(queries);
+  }
+  
+  @Public()
+  @Post('complete-forgot-password')
+  @ApiOkResponse({ type: BaseResult })
+  async completeForgotPassword(@Query() queries: CompleteForgotPasswordDTO) {
+    return this.authService.completeForgotPassword(queries);
+  }
+  
+  @Post('reset-password')
+  @ApiBearerAuth()
+  @CheckUserType(USER_TYPE.BUYER, USER_TYPE.SELLER)
+  @ApiOkResponse({ type: BaseResult })
+  async resetPassword(
+    @GetCurrentUserId() userId: number,
+    @Body() payload: ResetPasswordDTO,
+  ) {
+    return this.authService.resetPassword(userId, payload);
   }
 
   @Post('buyer/register')
@@ -77,6 +124,12 @@ export class AuthController {
   @ApiResponse({ type: SellerLoginResult, status: 200 })
   async loginSeller(@Body() payload: LoginDTO) {
     return await this.authService.login(payload, true);
+  }
+
+  @Public()
+  @Get('refresh-token')
+  async refreshToken(@Query() { refreshToken }: RefreshTokenDTO) {
+    return await this.authService.refreshToken(refreshToken);
   }
 
   // Google Auth
